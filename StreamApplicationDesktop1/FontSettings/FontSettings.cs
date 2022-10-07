@@ -28,7 +28,7 @@ namespace StreamApplicationDesktop1.FontSettings
             return txt;
         }
         
-       public FontStyle changeStyle(string style)
+       private FontStyle changeStyle(string style)
         {
             FontStyle fs = new FontStyle();
 
@@ -43,6 +43,19 @@ namespace StreamApplicationDesktop1.FontSettings
             }
 
             return fs;
+        }
+        public Font setFont(string line)
+        {
+            string[] fontPart = line.Split(";");
+
+            try
+            {
+                return new Font(fontPart[0], float.Parse(fontPart[2]), changeStyle(fontPart[1]));
+            }
+            catch (Exception)
+            {
+                return new Font(fontPart[0], float.Parse(fontPart[1]), changeStyle(fontPart[2]));
+            }
         }
     }
 }

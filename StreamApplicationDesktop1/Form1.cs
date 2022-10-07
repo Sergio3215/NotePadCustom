@@ -1,5 +1,6 @@
 namespace StreamApplicationDesktop1
 {
+    using AppClasses;
     public partial class Form1 : Form
     {
         public static bool setFont = false;
@@ -12,19 +13,22 @@ namespace StreamApplicationDesktop1
         public bool edited = false;
         public bool save = false;
         public string txtSaved = "";
+        public string newSaveString = "";
 
         FontSettings.FontSettings ftns;
+        FilesManager fm;
+        importManager im;
+        ExportManager em;
         public Form1()
         {
             InitializeComponent();
             ftns = new FontSettings.FontSettings();
-            StreamReader rd = new StreamReader("font-config");
-            string line = rd.ReadLine();
-            rd.Close();
+            fm = new FilesManager();
+            im = new importManager();
+            em = new ExportManager();
 
-            string[] fontPart = line.Split(";");
-
-            rtxtTexto.Font = new Font(fontPart[0], float.Parse(fontPart[2]), ftns.changeStyle(fontPart[1]));
+            string line = fm.OpenFile("font-config");
+            rtxtTexto.Font = ftns.setFont(line);
         }
 
         private void guardarToolStripMenuItem_Click(object sender, EventArgs e)
@@ -64,7 +68,11 @@ namespace StreamApplicationDesktop1
         }
         private void TimeChange_Tick(object sender, EventArgs e)
         {
-            edited = this.Text.Contains("*");
+            bool __isNew = this.Text.Contains("*");
+            edited = __isNew;
+            bool __isTxtSaved = rtxtTexto.Text == txtSaved;
+            string quitAsterisc = this.Text.Substring(1, this.Text.Length - 1);
+
             if (setFont)
             {
                 rtxtTexto.Font = fnt;
@@ -73,9 +81,9 @@ namespace StreamApplicationDesktop1
             }
             if (nameSave != "" && !this.Text.Contains(nameSave))
             {
-                if (this.Text.Contains("*"))
+                if (__isNew)
                 {
-                    this.Text = this.Text.Substring(1, this.Text.Length - 1);
+                    this.Text = "NotePad Custom";
                 }
                 this.Text = nameSave + " - " + this.Text;
                 save = true;
@@ -84,23 +92,23 @@ namespace StreamApplicationDesktop1
             {
                 if (!File.Exists(nameSave))
                 {
-                    File.Create(nameSave + ".txt").Close();
+                    File.Create(nameSave+".txt").Close();
                 }
 
-                StreamWriter wr = new StreamWriter(nameSave + ".txt");
-                wr.Write(rtxtTexto.Text);
-                wr.Close();
+                string filenameCustom = nameSave+".txt";
+
+                fm.WriteFile(filenameCustom, rtxtTexto.Text, "noline");
 
                 txtSaved = rtxtTexto.Text;
                 save = !save;
             }
-            if (rtxtTexto.Text != txtSaved && !this.Text.Contains("*"))
+            if (!__isTxtSaved && !__isNew)
             {
                 this.Text = "*" + this.Text;
             }
-            if (rtxtTexto.Text == txtSaved && this.Text.Contains("*"))
+            if (__isTxtSaved && __isNew)
             {
-                this.Text = this.Text.Substring(1, this.Text.Length - 1);
+                this.Text = quitAsterisc;
             }
             if (oksave)
             {
@@ -148,8 +156,6 @@ namespace StreamApplicationDesktop1
         }
         void SaveAs()
         {
-            //frmSave frm = new frmSave();
-            //frm.Show();
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.FileName = "*.txt";
             sfd.Filter = "Text Documents (*.txt)|*.txt| All Files (*.*)|*.*";
@@ -157,26 +163,24 @@ namespace StreamApplicationDesktop1
             {
                 save = true;
                 string[] cut = sfd.FileName.Split('\\');
-                nameSave = cut[cut.Count() - 1];
+                nameSave = cut[cut.Count() - 1].Split(".")[0];
             }
         }
 
         void OpenFiles()
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Filter = "Text Documents (*.txt)|*.txt| All Files (*.*)|*.*";
+            OpenFileDialog ofd = im.OpenFile();
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                StreamReader rd = new StreamReader(ofd.FileName);
-                rtxtTexto.Text = rd.ReadLine();
-                txtSaved = rtxtTexto.Text;
+                string line = fm.OpenFile(ofd.FileName);
+                rtxtTexto.Text = line;
+                txtSaved = line;
                 nameSave = ofd.SafeFileName.Split('.')[0];
                 if (this.Text.Contains("-"))
                 {
                     this.Text = "NotePad Custom";
                 }
                 this.Text = nameSave + " - " + this.Text;
-                rd.Close();
 
             }
         }
@@ -229,4 +233,5 @@ namespace StreamApplicationDesktop1
         {
         }
     }
+
 }

@@ -11,29 +11,29 @@ using System.Windows.Forms;
 
 namespace StreamApplicationDesktop1
 {
+    using AppClasses;
     public partial class frmFont : Form
     {
+        string stringFile = "font-config";
         FontSettings.FontSettings ftns;
+        FilesManager fm;
         public frmFont()
         {
             InitializeComponent();
-
+            fm = new FilesManager();
             ftns = new FontSettings.FontSettings();
 
 
             lstFontSize = ftns.AddFontSize(lstFontSize);
-            if (!File.Exists("font-config"))
-            {
-                File.Create("font-config").Close();
-                StreamWriter wr = new StreamWriter("font-config");
-                wr.WriteLine("Arial;Regular;8");
-                wr.Close();
-                lbSample.Font = new Font("Arial", 8, FontStyle.Regular);
-            }
 
-            StreamReader rd = new StreamReader("font-config");
-            string line = rd.ReadLine();
-            rd.Close();
+            string fontDefault = "Arial;Regular;8";
+
+            if (!File.Exists(stringFile))
+            {
+                lbSample.Font = fm.createFiles(stringFile,fontDefault);
+            }
+            
+            string line = fm.OpenFile(stringFile);
 
             string[] fontPart = line.Split(";");
 
@@ -64,7 +64,8 @@ namespace StreamApplicationDesktop1
 
         Label ChangeLabel(Label lb)
         {
-            lb.Font = new Font(txtFontSearch.Text, float.Parse(txtFontSize.Text), ftns.changeStyle(txtFontStyle.Text));
+            string lineStyle = $"{txtFontSearch.Text};{txtFontSize.Text};{txtFontStyle.Text}";
+            lb.Font = ftns.setFont(lineStyle);
             return lb;
         }
 
@@ -75,9 +76,7 @@ namespace StreamApplicationDesktop1
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            StreamWriter wr = new StreamWriter("font-config");
-            wr.WriteLine($"{txtFontSearch.Text};{txtFontStyle.Text};{txtFontSize.Text}");
-            wr.Close();
+            fm.WriteFile(stringFile, $"{txtFontSearch.Text};{txtFontStyle.Text};{txtFontSize.Text}");
 
             this.Close();
 
